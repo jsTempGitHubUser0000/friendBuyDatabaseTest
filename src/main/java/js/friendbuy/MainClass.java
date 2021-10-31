@@ -16,81 +16,36 @@ public class MainClass {
 		DefaultDatabaseManager defaultDatabaseManager = new DefaultDatabaseManager(dataStoreFactory, 
 				transactionFactory);
 		
+		DefaultDatabaseCommandParser commandParser = new DefaultDatabaseCommandParser(defaultDatabaseManager);
+		
 		System.out.println("IN MEMORY DATABASE EXAMPLE:");
 		
 		while(keepRunnning) {
 			
 			String commandString = inputScanner.nextLine();
 			
+			//Split the input string by whitespace
+			//Todo: Determine how input values containing whitespace or control characters such as endlines should be handled (values might need to be placed in quotes in this case)
 			String[] commandArray = commandString.split("\\s+");
 			
 			String output = null;
 			
 			if (commandArray.length > 0) {	
 				if (commandArray[0].equals("END")) {
+					//Quit the program shell
 					keepRunnning = false;					
-				} else if (commandArray[0].equals("SET")) {
-					if (commandArray.length == 3) {
-						defaultDatabaseManager.setValue(commandArray[1], commandArray[2]);
-						
-					} else {
-						output = "INVALID ARGUMENTS FOR SET COMMAND";
-					}
-										
-				}  else if (commandArray[0].equals("UNSET")) {
-					if (commandArray.length == 2) {
-						defaultDatabaseManager.setValue(commandArray[1], null);						
-					} else {
-						output = "INVALID ARGUMENTS FOR UNSET COMMAND";
-					}									
-				} else if (commandArray[0].equals("GET")) {
-					if (commandArray.length == 2) {
-						String value = defaultDatabaseManager.getValue(commandArray[1]);
-						
-						if (value == null) {
-							output = "NULL";
-						} else {
-							output = value;
-						}						
-					} else {
-						output = "INVALID ARGUMENTS FOR GET COMMAND";
-					}									
-				} else if (commandArray[0].equals("NUMEQUALTO")) {
-					if (commandArray.length == 2) {
-						int value = defaultDatabaseManager.countValueOccurrences(commandArray[1]);
-						output = Integer.toString(value);						
-					} else {
-						output = "INVALID ARGUMENTS FOR GET COMMAND";
-					}									
-				} else if (commandArray[0].equals("BEGIN")) {
-					if (commandArray.length == 1) {
-						defaultDatabaseManager.beginTransaction();						
-					} else {
-						output = "INVALID ARGUMENTS FOR BEGIN COMMAND";
-					}									
-				} else if (commandArray[0].equals("ROLLBACK")) {
-					if (commandArray.length == 1) {
-						try {
-							defaultDatabaseManager.rollbackCurrentTransaction();
-						} catch(NoCurrentTransactionException exception) {
-							output = "NO TRANSACTION";
-						}
-					} else {
-						output = "INVALID ARGUMENTS FOR ROLLBACK COMMAND";
-					}									
-				} else if (commandArray[0].equals("COMMIT")) {
-					if (commandArray.length == 1) {
-						try {
-							defaultDatabaseManager.commitTransaction();
-						} catch(NoCurrentTransactionException exception) {
-							output = "NO TRANSACTION";
-						}
-					} else {
-						output = "INVALID ARGUMENTS FOR ROLLBACK COMMAND";
-					}									
-				} else {
-					output = "UNRECOGNIZED COMMAND";
-				} 
+				} else {					
+					String[] argumentsArray = new String[commandArray.length - 1];
+					
+					System.arraycopy(commandArray, 1, argumentsArray, 0, commandArray.length - 1);
+					
+					try {
+						//This parser handles actual database command in order to separate them from commands that control the program "shell" itself, allowing more thorough testing of database commands.
+						output = commandParser.parseAndExecuteCommand(commandArray[0], argumentsArray);
+					} catch (NoCurrentTransactionException | InvalidCommandException ex) {
+						output = ex.getMessage();
+					}					
+				}
 				
 			} else {
 				output = "PLEASE ENTER A COMMAND";

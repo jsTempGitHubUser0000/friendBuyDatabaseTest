@@ -65,7 +65,7 @@ public class DefaultDatabaseManager implements IDatabaseManager {
 		transactionStack.add(newTransaction);		
 	}
 
-	public void rollbackCurrentTransaction() throws NoCurrentTransactionException {		
+	public void rollbackCurrentTopLevelTransaction() throws NoCurrentTransactionException {		
 		if (transactionStack.size() < 1) {
 			throw new NoCurrentTransactionException("Unable to Roll Back - No Current Transaction");
 		}
@@ -95,7 +95,7 @@ public class DefaultDatabaseManager implements IDatabaseManager {
 		}
 	}
 
-	public void commitTransaction() throws NoCurrentTransactionException {
+	public void commitAllCurrentTransactions() throws NoCurrentTransactionException {
 		if (transactionStack.size() < 1) {
 			throw new NoCurrentTransactionException("Unable to Commit - No Current Transaction");
 		}
